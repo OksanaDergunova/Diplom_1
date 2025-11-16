@@ -1,16 +1,15 @@
 package praktikum;
 
+import org.assertj.core.api.SoftAssertions;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
-@RunWith(Parameterized.class)
 public class BurgerTest {
 
     private Burger burger;
@@ -19,153 +18,111 @@ public class BurgerTest {
     private Bun mockBun;
 
     @Mock
-    private Ingredient mockIngredient1;
+    private Ingredient mockIngredientFirst;
 
     @Mock
-    private Ingredient mockIngredient2;
+    private Ingredient mockIngredientSecond;
 
     @Mock
-    private Ingredient mockIngredient3;
-
-    private final String bunName;
-    private final float bunPrice;
-    private final IngredientType ingredientType;
-    private final String ingredientName;
-    private final float ingredientPrice;
-
-    public BurgerTest(String bunName, float bunPrice, IngredientType ingredientType,
-                      String ingredientName, float ingredientPrice) {
-        this.bunName = bunName;
-        this.bunPrice = bunPrice;
-        this.ingredientType = ingredientType;
-        this.ingredientName = ingredientName;
-        this.ingredientPrice = ingredientPrice;
-    }
-
-    @Parameterized.Parameters
-    public static Object[][] getTestData() {
-        return new Object[][] {
-                {"black bun", 100.0f, IngredientType.SAUCE, "hot sauce", 50.0f},
-                {"white bun", 200.0f, IngredientType.FILLING, "cutlet", 75.0f},
-                {"red bun", 150.5f, IngredientType.SAUCE, "chili sauce", 80.25f}
-        };
-    }
+    private Ingredient mockIngredientThird;
 
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
         burger = new Burger();
 
-        // Настройка моков для булки
-        when(mockBun.getName()).thenReturn(bunName);
-        when(mockBun.getPrice()).thenReturn(bunPrice);
+        when(mockBun.getName()).thenReturn("white bun");
+        when(mockBun.getPrice()).thenReturn(200.0f);
 
-        // Настройка моков для ингредиентов
-        when(mockIngredient1.getType()).thenReturn(ingredientType);
-        when(mockIngredient1.getName()).thenReturn(ingredientName);
-        when(mockIngredient1.getPrice()).thenReturn(ingredientPrice);
+        when(mockIngredientFirst.getType()).thenReturn(IngredientType.SAUCE);
+        when(mockIngredientFirst.getName()).thenReturn("hot sauce");
+        when(mockIngredientFirst.getPrice()).thenReturn(50.0f);
 
-        when(mockIngredient2.getType()).thenReturn(IngredientType.FILLING);
-        when(mockIngredient2.getName()).thenReturn("cheese");
-        when(mockIngredient2.getPrice()).thenReturn(30.0f);
+        when(mockIngredientSecond.getType()).thenReturn(IngredientType.FILLING);
+        when(mockIngredientSecond.getName()).thenReturn("cheese");
+        when(mockIngredientSecond.getPrice()).thenReturn(30.0f);
 
-        when(mockIngredient3.getType()).thenReturn(IngredientType.SAUCE);
-        when(mockIngredient3.getName()).thenReturn("mayo");
-        when(mockIngredient3.getPrice()).thenReturn(20.0f);
-    }
-
-    @Test
-    public void testSetBuns() {
-        burger.setBuns(mockBun);
-
-        assertNotNull("Булочка должна быть установлена", burger.bun);
-        assertEquals("Название булочки должно совпадать", bunName, burger.bun.getName());
-        assertEquals("Цена булочки должна совпадать", bunPrice, burger.bun.getPrice(), 0.001);
-    }
-
-    @Test
-    public void testAddIngredient() {
-        burger.addIngredient(mockIngredient1);
-
-        assertEquals("Список ингредиентов должен содержать 1 элемент", 1, burger.ingredients.size());
-        assertEquals("Название ингредиента должно совпадать", ingredientName, burger.ingredients.get(0).getName());
+        when(mockIngredientThird.getType()).thenReturn(IngredientType.SAUCE);
+        when(mockIngredientThird.getName()).thenReturn("mayo");
+        when(mockIngredientThird.getPrice()).thenReturn(20.0f);
     }
 
     @Test
     public void testRemoveIngredient() {
-        burger.addIngredient(mockIngredient1);
-        burger.addIngredient(mockIngredient2);
+        burger.addIngredient(mockIngredientFirst);
+        burger.addIngredient(mockIngredientSecond);
 
-        assertEquals("Начальное количество ингредиентов должно быть 2", 2, burger.ingredients.size());
+        assertThat(burger.ingredients).hasSize(2);
 
         burger.removeIngredient(0);
 
-        assertEquals("Количество ингредиентов должно быть 1 после удаления", 1, burger.ingredients.size());
-        assertEquals("Оставшийся ингредиент должен быть вторым", "cheese", burger.ingredients.get(0).getName());
+        SoftAssertions softly = new SoftAssertions();
+        softly.assertThat(burger.ingredients).hasSize(1);
+        softly.assertThat(burger.ingredients.get(0).getName()).isEqualTo("cheese");
+        softly.assertAll();
     }
 
     @Test
     public void testMoveIngredient() {
-        burger.addIngredient(mockIngredient1);
-        burger.addIngredient(mockIngredient2);
-        burger.addIngredient(mockIngredient3);
+        burger.addIngredient(mockIngredientFirst);
+        burger.addIngredient(mockIngredientSecond);
+        burger.addIngredient(mockIngredientThird);
 
-        // Проверяем первоначальный порядок
-        assertEquals("Первый ингредиент должен быть " + ingredientName, ingredientName, burger.ingredients.get(0).getName());
-        assertEquals("Второй ингредиент должен быть cheese", "cheese", burger.ingredients.get(1).getName());
-
-        // Перемещаем первый ингредиент на позицию 2
         burger.moveIngredient(0, 2);
 
-        // Проверяем новый порядок
-        assertEquals("Первый ингредиент теперь должен быть cheese", "cheese", burger.ingredients.get(0).getName());
-        assertEquals("Второй ингредиент теперь должен быть mayo", "mayo", burger.ingredients.get(1).getName());
-        assertEquals("Третий ингредиент теперь должен быть " + ingredientName, ingredientName, burger.ingredients.get(2).getName());
+        SoftAssertions softly = new SoftAssertions();
+        softly.assertThat(burger.ingredients.get(0).getName()).isEqualTo("cheese");
+        softly.assertThat(burger.ingredients.get(1).getName()).isEqualTo("mayo");
+        softly.assertThat(burger.ingredients.get(2).getName()).isEqualTo("hot sauce");
+        softly.assertAll();
     }
 
     @Test
-    public void testGetPrice() {
+    public void testGetPriceWithMultipleIngredients() {
         burger.setBuns(mockBun);
-        burger.addIngredient(mockIngredient1);
-        burger.addIngredient(mockIngredient2);
+        burger.addIngredient(mockIngredientFirst);
+        burger.addIngredient(mockIngredientSecond);
 
-        float expectedPrice = (bunPrice * 2) + ingredientPrice + 30.0f;
+        float expectedPrice = (200.0f * 2) + 50.0f + 30.0f;
         float actualPrice = burger.getPrice();
 
-        assertEquals("Общая цена должна быть рассчитана правильно", expectedPrice, actualPrice, 0.001);
-    }
-
-    @Test
-    public void testGetReceipt() {
-        burger.setBuns(mockBun);
-        burger.addIngredient(mockIngredient1);
-
-        String receipt = burger.getReceipt();
-
-        assertNotNull("Чек не должен быть null", receipt);
-        assertTrue("Чек должен содержать название булочки", receipt.contains(bunName));
-        assertTrue("Чек должен содержать название ингредиента", receipt.contains(ingredientName));
-        assertTrue("Чек должен содержать тип ингредиента", receipt.contains(ingredientType.toString().toLowerCase()));
-        assertTrue("Чек должен содержать общую цену", receipt.contains("Price:"));
+        assertThat(actualPrice).isEqualTo(expectedPrice);
     }
 
     @Test
     public void testGetReceiptWithMultipleIngredients() {
         burger.setBuns(mockBun);
-        burger.addIngredient(mockIngredient1);
-        burger.addIngredient(mockIngredient2);
+        burger.addIngredient(mockIngredientFirst);
+        burger.addIngredient(mockIngredientSecond);
 
         String receipt = burger.getReceipt();
+        float price = burger.getPrice();
 
-        assertNotNull("Чек не должен быть null", receipt);
-        assertTrue("Чек должен содержать первый ингредиент", receipt.contains(ingredientName));
-        assertTrue("Чек должен содержать второй ингредиент", receipt.contains("cheese"));
+        String expectedReceipt = String.format("(==== %s ====)%n", "white bun") +
+                String.format("= %s %s =%n", "sauce", "hot sauce") +
+                String.format("= %s %s =%n", "filling", "cheese") +
+                String.format("(==== %s ====)%n", "white bun") +
+                String.format("%nPrice: %f%n", price);
 
-        // Проверяем структуру чека
+        SoftAssertions softly = new SoftAssertions();
+        softly.assertThat(receipt).isEqualTo(expectedReceipt);
+        softly.assertAll();
+    }
+
+    @Test
+    public void testGetReceiptStructureWithMultipleIngredients() {
+        burger.setBuns(mockBun);
+        burger.addIngredient(mockIngredientFirst);
+        burger.addIngredient(mockIngredientSecond);
+
+        String receipt = burger.getReceipt();
         String[] lines = receipt.split("\n");
-        assertTrue("Чек должен содержать несколько строк", lines.length >= 4);
-        assertTrue("Первая строка должна содержать булочку", lines[0].contains(bunName));
-        assertTrue("Последняя строка должна содержать цену", lines[lines.length - 1].contains("Price:"));
+
+        SoftAssertions softly = new SoftAssertions();
+        softly.assertThat(lines.length).isGreaterThanOrEqualTo(4);
+        softly.assertThat(lines[0]).contains("white bun");
+        softly.assertThat(lines[lines.length - 1]).contains("Price:");
+        softly.assertAll();
     }
 
     @Test
@@ -173,28 +130,37 @@ public class BurgerTest {
         burger.setBuns(mockBun);
 
         float price = burger.getPrice();
+
+        assertThat(price).isEqualTo(400.0f);
+    }
+
+    @Test
+    public void testReceiptFormatWithNoIngredients() {
+        burger.setBuns(mockBun);
+
+        float price = burger.getPrice();
         String receipt = burger.getReceipt();
 
-        assertEquals("Цена должна быть равна цене булочки умноженной на 2", bunPrice * 2, price, 0.001);
-
-        // Проверяем конкретный ожидаемый формат чека без ингредиентов
-        String expectedReceipt = String.format("(==== %s ====)%n", bunName) +
-                String.format("(==== %s ====)%n", bunName) +
+        String expectedReceipt = String.format("(==== %s ====)%n", "white bun") +
+                String.format("(==== %s ====)%n", "white bun") +
                 String.format("%nPrice: %f%n", price);
 
-        assertEquals("Чек должен соответствовать ожидаемому формату без ингредиентов",
-                expectedReceipt, receipt);
+        assertThat(receipt).isEqualTo(expectedReceipt);
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test
     public void testRemoveIngredientWithInvalidIndex() {
-        burger.addIngredient(mockIngredient1);
-        burger.removeIngredient(5); // Неверный индекс
+        burger.addIngredient(mockIngredientFirst);
+
+        assertThatThrownBy(() -> burger.removeIngredient(5))
+                .isInstanceOf(IndexOutOfBoundsException.class);
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test
     public void testMoveIngredientWithInvalidIndex() {
-        burger.addIngredient(mockIngredient1);
-        burger.moveIngredient(0, 5); // Неверный индекс
+        burger.addIngredient(mockIngredientFirst);
+
+        assertThatThrownBy(() -> burger.moveIngredient(0, 5))
+                .isInstanceOf(IndexOutOfBoundsException.class);
     }
 }
